@@ -1,7 +1,6 @@
 import '../styles/global.css';
 
 import { ChallengessProvider } from '../context/ChellengesContext';
-import { useState } from 'react';
 
 function MyApp({ Component, pageProps }) {
   return (

@@ -1,4 +1,4 @@
-import { createContext, useState, ReactNode } from 'react';
+import { createContext, useState, ReactNode, useEffect } from 'react';
 import challengess from '../../challenges.json';
 
 interface Challenges{
@@ -16,6 +16,7 @@ interface ChallengessContextData{
     levelUp: () => void;
     startNewChallenges: () => void;
     resetChallenges: () => void;
+    completeChallenge: () => void;
 }
 
 interface ChallengessProviderProps{
@@ -31,7 +32,11 @@ export function ChallengessProvider({children}: ChallengessProviderProps){
 
     const [activeChallenges, setActiveChallenges] = useState(null);
 
-    const experienceToNextLevel = Math.pow((level + 1) * 4, 2)
+    const experienceToNextLevel = Math.pow((level + 1) * 4, 2);
+
+    useEffect(() => {
+        Notification.requestPermission();
+    }, [])
   
     function levelUp(){
       setLevel(level + 1);
@@ -42,6 +47,33 @@ export function ChallengessProvider({children}: ChallengessProviderProps){
         const challenges = challengess[randomChallengesIndex];
 
         setActiveChallenges(challenges);
+
+        new Audio('/notification.mp3').play();
+
+        if(Notification.permission === 'granted') {
+            new Notification('Novo desafio', {
+                body: `Valendo ${challenges.amount}xp!`
+            })
+        }
+    }
+
+    function completeChallenge(){
+        if(!activeChallenges){
+            return;
+        }
+
+        const {amount} = activeChallenges;
+
+        let finalExperience = currentExperience + amount;
+
+        if(finalExperience >= experienceToNextLevel){
+            finalExperience = finalExperience - experienceToNextLevel;
+            levelUp();
+        }
+
+        setCurrentExperience(finalExperience);
+        setActiveChallenges(null);
+        setChallengesCompleted(challengessCompleted + 1);
     }
 
     function resetChallenges(){
@@ -57,7 +89,8 @@ export function ChallengessProvider({children}: ChallengessProviderProps){
                 levelUp,
                 startNewChallenges,
                 activeChallenges,
-                resetChallenges
+                resetChallenges,
+                completeChallenge,
             }}
         >
             {children}
